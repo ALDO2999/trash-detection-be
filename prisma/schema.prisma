@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  PETUGAS
+}
+
+enum WasteType {
+  PLASTIC
+  PAPER
+  CARDBOARD
+  METAL
+  BATTERY
+  CLOTHES
+  SHOES
+}
+
+enum SubmissionStatus {
+  MENUNGGU_VERIFIKASI
+  DISETUJUI
+  DITOLAK
+}
+
+enum PointTransactionType {
+  EARNED
+  REDEEMED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
+  phone        String?
+  role         Role     @default(USER)
+  isVerified   Boolean  @default(false)
+  pointBalance Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  otpVerifications   OtpVerification[]
+  refreshTokens      RefreshToken[]
+  scanResults        ScanResult[]
+  submissions        Submission[]
+  reviewedSubmissions Submission[]      @relation("ReviewedSubmissions")
+  pointTransactions  PointTransaction[]
+  voucherRedemptions VoucherRedemption[]
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String?
+
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([token])
+}
+
+model ScanResult {
+  id            String    @id @default(uuid())
+  imageUrl      String
+  predictedType WasteType
+  confidence    Float
+  createdAt     DateTime  @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  submissions Submission[]
+}
+
+model Submission {
+  id              String           @id @default(uuid())
+  wasteType       WasteType
+  estimatedWeight Float?
+  actualWeight    Float?
+  imageUrl        String
+  status          SubmissionStatus @default(MENUNGGU_VERIFIKASI)
+  notes           String?
+  reviewedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user          User       @relation(fields: [userId], references: [id])
+  userId        String
+  scanResult    ScanResult? @relation(fields: [scanResultId], references: [id])
+  scanResultId  String?
+  reviewedBy    User?       @relation("ReviewedSubmissions", fields: [reviewedById], references: [id])
+  reviewedById  String?
+
+  pointTransactions PointTransaction[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model PointTransaction {
+  id          String               @id @default(uuid())
+  amount      Int
+  type        PointTransactionType
+  description String
+  createdAt   DateTime             @default(now())
+
+  user               User               @relation(fields: [userId], references: [id])
+  userId             String
+  submission         Submission?        @relation(fields: [submissionId], references: [id])
+  submissionId       String?
+  voucherRedemption  VoucherRedemption? @relation(fields: [voucherRedemptionId], references: [id])
+  voucherRedemptionId String?
+
+  @@index([userId])
+}
+
+model Voucher {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  pointCost   Int
+  value       Int
+  stock       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  redemptions VoucherRedemption[]
+}
+
+model VoucherRedemption {
+  id         String   @id @default(uuid())
+  pointsUsed Int
+  redeemedAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  voucher   Voucher @relation(fields: [voucherId], references: [id])
+  voucherId String
+
+  pointTransactions PointTransaction[]
+
+  @@index([userId])
+}
