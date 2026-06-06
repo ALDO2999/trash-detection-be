@@ -49,14 +49,28 @@ export class EmailService {
     await this.send(email, subject, html);
   }
 
+  async sendPasswordResetOtp(email: string, name: string, otp: string): Promise<void> {
+    const subject = 'Reset Password EcoPoint';
+    const html = this.passwordResetTemplate(name, otp);
+    await this.send(email, subject, html);
+  }
+
   async sendVoucherRedeemed(
     email: string,
     name: string,
     voucherName: string,
     pointsUsed: number,
+    code: string,
+    expiresAt: Date,
   ): Promise<void> {
     const subject = 'Penukaran Voucher Berhasil – EcoPoint';
-    const html = this.voucherRedeemedTemplate(name, voucherName, pointsUsed);
+    const html = this.voucherRedeemedTemplate(
+      name,
+      voucherName,
+      pointsUsed,
+      code,
+      expiresAt,
+    );
     await this.send(email, subject, html);
   }
 
@@ -155,11 +169,43 @@ export class EmailService {
     `;
   }
 
+  private passwordResetTemplate(name: string, otp: string): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="color: #22c55e; margin: 0;">🌿 EcoPoint</h2>
+        </div>
+        <h3 style="color: #1a1a1a;">Halo, ${name}!</h3>
+        <p style="color: #444; line-height: 1.6;">
+          Kami menerima permintaan untuk mereset password akun EcoPoint Anda. Gunakan kode OTP berikut:
+        </p>
+        <div style="background: #fff7ed; border: 2px solid #f97316; border-radius: 8px; text-align: center; padding: 20px; margin: 24px 0;">
+          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #ea580c;">${otp}</span>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+          Kode ini berlaku selama <strong>5 menit</strong>. Jangan bagikan kode ini kepada siapa pun.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tidak akan berubah.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
+        <p style="color: #999; font-size: 12px; text-align: center;">EcoPoint – Bersama Jaga Lingkungan</p>
+      </div>
+    `;
+  }
+
   private voucherRedeemedTemplate(
     name: string,
     voucherName: string,
     pointsUsed: number,
+    code: string,
+    expiresAt: Date,
   ): string {
+    const expiryStr = expiresAt.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
     return `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
@@ -173,8 +219,15 @@ export class EmailService {
           <p style="margin: 4px 0; color: #444;"><strong>Voucher:</strong> ${voucherName}</p>
           <p style="margin: 4px 0; color: #ef4444;"><strong>Poin Digunakan: -${pointsUsed} poin</strong></p>
         </div>
+        <p style="margin: 0 0 8px; color: #444;">Kode voucher Anda:</p>
+        <div style="background: #16a34a; color: #ffffff; border-radius: 8px; padding: 16px; margin: 0 0 16px; text-align: center;">
+          <span style="font-size: 22px; font-weight: bold; letter-spacing: 2px;">${code}</span>
+        </div>
+        <p style="margin: 4px 0 16px; color: #444; text-align: center;">
+          Berlaku sampai <strong>${expiryStr}</strong> (14 hari)
+        </p>
         <p style="color: #444; line-height: 1.6;">
-          Cek voucher Anda di aplikasi EcoPoint dan gunakan sebelum kedaluwarsa.
+          Voucher juga tersimpan di menu <strong>Voucher Saya</strong> pada aplikasi EcoPoint. Tunjukkan kode di atas saat menukarkan di merchant mitra sebelum kedaluwarsa.
         </p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
         <p style="color: #999; font-size: 12px; text-align: center;">EcoPoint – Bersama Jaga Lingkungan</p>

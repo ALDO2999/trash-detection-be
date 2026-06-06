@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -16,5 +16,32 @@ export class UserController {
   @Get('dashboard')
   getDashboard(@CurrentUser('id') userId: string) {
     return this.userService.getDashboard(userId);
+  }
+
+  @Get('leaderboard')
+  getLeaderboard(@CurrentUser('id') userId: string) {
+    return this.userService.getLeaderboard(userId);
+  }
+
+  @Patch('profile')
+  updateProfile(
+    @CurrentUser('id') userId: string,
+    @Body() dto: { name?: string; phone?: string },
+  ) {
+    return this.userService.updateProfile(userId, dto);
+  }
+
+  @Patch('password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: { currentPassword: string; newPassword: string },
+  ) {
+    return this.userService.changePassword(userId, dto.currentPassword, dto.newPassword);
+  }
+
+  @Delete('account')
+  deleteAccount(@CurrentUser('id') userId: string) {
+    return this.userService.deleteAccount(userId);
   }
 }

@@ -59,7 +59,7 @@ export class ScanService {
       },
     });
 
-    return { data: results };
+    return { message: 'Berhasil', data: results };
   }
 
   async getDetail(userId: string, scanResultId: string) {
@@ -74,6 +74,6 @@ export class ScanService {
 
     if (!result) throw new BadRequestException('Hasil scan tidak ditemukan');
 
-    return { data: result };
+    return { message: 'Berhasil', data: result };
   }
 }

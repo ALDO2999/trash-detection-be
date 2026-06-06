@@ -150,7 +150,7 @@ export class AuthService {
       if (!user) throw new UnauthorizedException();
 
       const tokens = await this.generateTokens(user.id, user.email, user.role);
-      return { data: tokens };
+      return { message: 'Berhasil', data: tokens };
     } catch {
       throw new UnauthorizedException('Refresh token tidak valid');
     }
@@ -161,6 +161,64 @@ export class AuthService {
       where: { userId, token },
     });
     return { message: 'Logout berhasil' };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    // Don't reveal whether email exists for unverified accounts
+    if (!user || !user.isVerified) {
+      return { message: 'Jika email terdaftar dan terverifikasi, kode OTP akan dikirim' };
+    }
+
+    const recentOtp = await this.prisma.otpVerification.findFirst({
+      where: {
+        email,
+        isUsed: false,
+        createdAt: { gt: new Date(Date.now() - 60 * 1000) },
+      },
+    });
+
+    if (recentOtp) {
+      throw new BadRequestException('Tunggu 1 menit sebelum meminta OTP baru');
+    }
+
+    await this.sendPasswordResetOtp(user.id, user.email, user.name);
+    return { message: 'Kode OTP reset password telah dikirim ke email Anda' };
+  }
+
+  async resetPassword(dto: { email: string; otp: string; newPassword: string }) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+
+    const otpRecord = await this.prisma.otpVerification.findFirst({
+      where: {
+        email: dto.email,
+        otp: dto.otp,
+        isUsed: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otpRecord) {
+      throw new BadRequestException('OTP tidak valid atau sudah kedaluwarsa');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.$transaction([
+      this.prisma.otpVerification.update({
+        where: { id: otpRecord.id },
+        data: { isUsed: true },
+      }),
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      }),
+    ]);
+
+    return { message: 'Password berhasil direset, silakan login' };
   }
 
   private async generateTokens(userId: string, email: string, role: string) {
@@ -184,6 +242,18 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  private async sendPasswordResetOtp(userId: string, email: string, name: string) {
+    const otp = this.generateOtp();
+    const expiresMinutes = this.config.get<number>('OTP_EXPIRES_MINUTES') ?? 5;
+    const expiresAt = new Date(Date.now() + expiresMinutes * 60 * 1000);
+
+    await this.prisma.otpVerification.create({
+      data: { email, otp, expiresAt, userId },
+    });
+
+    await this.emailService.sendPasswordResetOtp(email, name, otp);
   }
 
   private async sendOtp(userId: string, email: string, name: string) {

@@ -14,6 +14,7 @@ import { OfficerModule } from './officer/officer.module';
 import { PointsModule } from './points/points.module';
 import { VoucherModule } from './voucher/voucher.module';
 import { UserModule } from './user/user.module';
+import { WasteBankModule } from './waste-bank/waste-bank.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UserModule } from './user/user.module';
     PointsModule,
     VoucherModule,
     UserModule,
+    WasteBankModule,
   ],
   providers: [
     {

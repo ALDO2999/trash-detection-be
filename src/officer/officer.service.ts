@@ -26,7 +26,7 @@ export class OfficerService {
       },
     });
 
-    return { data: submissions };
+    return { message: 'Berhasil', data: submissions };
   }
 
   async getSubmissionDetail(submissionId: string) {
@@ -42,7 +42,7 @@ export class OfficerService {
 
     if (!submission) throw new NotFoundException('Pengajuan tidak ditemukan');
 
-    return { data: submission };
+    return { message: 'Berhasil', data: submission };
   }
 
   async verifySubmission(
@@ -86,7 +86,10 @@ export class OfficerService {
 
         await tx.user.update({
           where: { id: submission.userId },
-          data: { pointBalance: { increment: pointsEarned } },
+          data: {
+            pointBalance: { increment: pointsEarned },
+            totalPointsEarned: { increment: pointsEarned },
+          },
         });
 
         await tx.pointTransaction.create({
@@ -158,6 +161,7 @@ export class OfficerService {
     ]);
 
     return {
+      message: 'Berhasil',
       data: {
         totalPending,
         totalApproved,

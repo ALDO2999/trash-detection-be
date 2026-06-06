@@ -3,8 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+
+const VOUCHER_VALIDITY_DAYS = 14;
 
 @Injectable()
 export class VoucherService {
@@ -13,13 +16,22 @@ export class VoucherService {
     private email: EmailService,
   ) {}
 
+  // Kode voucher: ECO-XXXXX-XXXXX (tanpa karakter ambigu seperti 0/O, 1/I)
+  private generateVoucherCode(): string {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = randomBytes(10);
+    let s = '';
+    for (let i = 0; i < 10; i++) s += alphabet[bytes[i] % alphabet.length];
+    return `ECO-${s.slice(0, 5)}-${s.slice(5)}`;
+  }
+
   async getAll() {
     const vouchers = await this.prisma.voucher.findMany({
       where: { isActive: true },
       orderBy: { pointCost: 'asc' },
     });
 
-    return { data: vouchers };
+    return { message: 'Berhasil', data: vouchers };
   }
 
   async redeem(userId: string, voucherId: string) {
@@ -37,12 +49,19 @@ export class VoucherService {
       );
     }
 
+    const code = this.generateVoucherCode();
+    const expiresAt = new Date(
+      Date.now() + VOUCHER_VALIDITY_DAYS * 24 * 60 * 60 * 1000,
+    );
+
     const redemption = await this.prisma.$transaction(async (tx) => {
       const newRedemption = await tx.voucherRedemption.create({
         data: {
           userId,
           voucherId,
           pointsUsed: voucher.pointCost,
+          code,
+          expiresAt,
         },
       });
 
@@ -74,6 +93,8 @@ export class VoucherService {
       user.name,
       voucher.name,
       voucher.pointCost,
+      redemption.code,
+      redemption.expiresAt,
     );
 
     return {
@@ -83,6 +104,8 @@ export class VoucherService {
         voucherName: voucher.name,
         pointsUsed: voucher.pointCost,
         redeemedAt: redemption.redeemedAt,
+        code: redemption.code,
+        expiresAt: redemption.expiresAt,
       },
     };
   }
@@ -91,13 +114,18 @@ export class VoucherService {
     const redemptions = await this.prisma.voucherRedemption.findMany({
       where: { userId },
       orderBy: { redeemedAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        code: true,
+        pointsUsed: true,
+        redeemedAt: true,
+        expiresAt: true,
         voucher: {
-          select: { name: true, value: true, pointCost: true },
+          select: { name: true, value: true, pointCost: true, description: true },
         },
       },
     });
 
-    return { data: redemptions };
+    return { message: 'Berhasil', data: redemptions };
   }
 }

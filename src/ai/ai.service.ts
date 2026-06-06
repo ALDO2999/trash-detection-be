@@ -10,7 +10,6 @@ const LABEL_TO_WASTE_TYPE: Record<string, WasteType> = {
   cardboard: WasteType.CARDBOARD,
   metal_can: WasteType.METAL,
   plastic_bottle: WasteType.PLASTIC,
-  paper: WasteType.PAPER,
   shoes: WasteType.SHOES,
   clothes: WasteType.CLOTHES,
 };

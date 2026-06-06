@@ -58,7 +58,7 @@ export class SubmissionService {
       },
     });
 
-    return { data: submissions };
+    return { message: 'Berhasil', data: submissions };
   }
 
   async getDetail(userId: string, submissionId: string) {
@@ -76,6 +76,6 @@ export class SubmissionService {
 
     if (!submission) throw new NotFoundException('Pengajuan tidak ditemukan');
 
-    return { data: submission };
+    return { message: 'Berhasil', data: submission };
   }
 }

@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SubmissionStatus, WasteType } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -22,7 +23,7 @@ export class UserService {
 
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
-    return { data: user };
+    return { message: 'Berhasil', data: user };
   }
 
   async getDashboard(userId: string) {
@@ -31,8 +32,7 @@ export class UserService {
       approvedSubmissions,
       pendingSubmissions,
       rejectedSubmissions,
-      pointBalance,
-      totalPointsEarned,
+      userBalances,
       wasteByType,
     ] = await Promise.all([
       this.prisma.submission.count({ where: { userId } }),
@@ -41,11 +41,7 @@ export class UserService {
       this.prisma.submission.count({ where: { userId, status: SubmissionStatus.DITOLAK } }),
       this.prisma.user.findUnique({
         where: { id: userId },
-        select: { pointBalance: true },
-      }),
-      this.prisma.pointTransaction.aggregate({
-        where: { userId, type: 'EARNED' },
-        _sum: { amount: true },
+        select: { pointBalance: true, totalPointsEarned: true },
       }),
       this.prisma.submission.groupBy({
         by: ['wasteType'],
@@ -73,9 +69,10 @@ export class UserService {
     }
 
     return {
+      message: 'Berhasil',
       data: {
-        pointBalance: pointBalance?.pointBalance ?? 0,
-        totalPointsEarned: totalPointsEarned._sum.amount ?? 0,
+        pointBalance: userBalances?.pointBalance ?? 0,
+        totalPointsEarned: userBalances?.totalPointsEarned ?? 0,
         totalSubmissions,
         approvedSubmissions,
         pendingSubmissions,
@@ -84,5 +81,93 @@ export class UserService {
         wasteStats,
       },
     };
+  }
+
+  async getLeaderboard(userId: string) {
+    const top = await this.prisma.user.findMany({
+      where: { role: 'USER', isVerified: true },
+      orderBy: [{ totalPointsEarned: 'desc' }, { createdAt: 'asc' }],
+      take: 10,
+      select: { id: true, name: true, totalPointsEarned: true },
+    });
+
+    const entries = top.map((u, i) => ({
+      id: u.id,
+      rank: i + 1,
+      name: u.name,
+      points: u.totalPointsEarned,
+      isCurrentUser: u.id === userId,
+    }));
+
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, totalPointsEarned: true, createdAt: true },
+    });
+
+    let currentUser: {
+      id: string;
+      rank: number;
+      name: string;
+      points: number;
+    } | null = null;
+
+    if (me) {
+      // Hitung berapa user yang berada di atas:
+      // - poin lebih banyak, ATAU
+      // - poin sama tapi daftar lebih awal (createdAt lebih kecil)
+      const higherCount = await this.prisma.user.count({
+        where: {
+          role: 'USER',
+          isVerified: true,
+          OR: [
+            { totalPointsEarned: { gt: me.totalPointsEarned } },
+            { totalPointsEarned: me.totalPointsEarned, createdAt: { lt: me.createdAt } },
+          ],
+        },
+      });
+      currentUser = {
+        id: me.id,
+        rank: higherCount + 1,
+        name: me.name,
+        points: me.totalPointsEarned,
+      };
+    }
+
+    return { message: 'Berhasil', data: { entries, currentUser } };
+  }
+
+  async updateProfile(userId: string, dto: { name?: string; phone?: string }) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.name?.trim() && { name: dto.name.trim() }),
+        ...(dto.phone !== undefined && { phone: dto.phone.trim() || null }),
+      },
+      select: { id: true, name: true, email: true, phone: true, role: true, pointBalance: true },
+    });
+    return { message: 'Profil berhasil diperbarui', data: user };
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) throw new BadRequestException('Password saat ini tidak sesuai');
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({ where: { id: userId }, data: { password: hashed } });
+
+    return { message: 'Password berhasil diubah' };
+  }
+
+  async deleteAccount(userId: string) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.pointTransaction.deleteMany({ where: { userId } });
+      await tx.voucherRedemption.deleteMany({ where: { userId } });
+      await tx.submission.deleteMany({ where: { userId } });
+      await tx.user.delete({ where: { id: userId } });
+    });
+    return { message: 'Akun berhasil dihapus' };
   }
 }

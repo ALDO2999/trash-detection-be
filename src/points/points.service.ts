@@ -11,7 +11,7 @@ export class PointsService {
       select: { pointBalance: true },
     });
 
-    return { data: { pointBalance: user?.pointBalance ?? 0 } };
+    return { message: 'Berhasil', data: { pointBalance: user?.pointBalance ?? 0 } };
   }
 
   async getHistory(userId: string) {
@@ -30,6 +30,6 @@ export class PointsService {
       },
     });
 
-    return { data: transactions };
+    return { message: 'Berhasil', data: transactions };
   }
 }
