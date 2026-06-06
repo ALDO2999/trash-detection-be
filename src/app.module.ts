@@ -8,6 +8,9 @@ import { EmailModule } from './email/email.module';
 import { ScanModule } from './scan/scan.module';
 import { SubmissionModule } from './submission/submission.module';
 import { OfficerModule } from './officer/officer.module';
+import { PointsModule } from './points/points.module';
+import { VoucherModule } from './voucher/voucher.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { OfficerModule } from './officer/officer.module';
     ScanModule,
     SubmissionModule,
     OfficerModule,
+    PointsModule,
+    VoucherModule,
+    UserModule,
   ],
 })
 export class AppModule {}
