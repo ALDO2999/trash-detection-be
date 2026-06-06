@@ -126,6 +126,7 @@ export class AuthService {
           email: user.email,
           role: user.role,
           pointBalance: user.pointBalance,
+          avatarUrl: user.avatarUrl,
         },
         ...tokens,
       },

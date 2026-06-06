@@ -37,6 +37,7 @@ model User {
   email        String   @unique
   password     String
   phone        String?
+  avatarUrl    String?
   role         Role     @default(USER)
   isVerified   Boolean  @default(false)
   pointBalance      Int      @default(0)

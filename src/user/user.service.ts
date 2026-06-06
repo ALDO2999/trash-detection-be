@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SubmissionStatus, WasteType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import * as path from 'path';
+import * as fs from 'fs';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -15,6 +17,7 @@ export class UserService {
         name: true,
         email: true,
         phone: true,
+        avatarUrl: true,
         role: true,
         pointBalance: true,
         createdAt: true,
@@ -88,26 +91,28 @@ export class UserService {
       where: { role: 'USER', isVerified: true },
       orderBy: [{ totalPointsEarned: 'desc' }, { createdAt: 'asc' }],
       take: 10,
-      select: { id: true, name: true, totalPointsEarned: true },
+      select: { id: true, name: true, avatarUrl: true, totalPointsEarned: true },
     });
 
     const entries = top.map((u, i) => ({
       id: u.id,
       rank: i + 1,
       name: u.name,
+      avatarUrl: u.avatarUrl,
       points: u.totalPointsEarned,
       isCurrentUser: u.id === userId,
     }));
 
     const me = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, totalPointsEarned: true, createdAt: true },
+      select: { id: true, name: true, avatarUrl: true, totalPointsEarned: true, createdAt: true },
     });
 
     let currentUser: {
       id: string;
       rank: number;
       name: string;
+      avatarUrl: string | null;
       points: number;
     } | null = null;
 
@@ -129,6 +134,7 @@ export class UserService {
         id: me.id,
         rank: higherCount + 1,
         name: me.name,
+        avatarUrl: me.avatarUrl,
         points: me.totalPointsEarned,
       };
     }
@@ -143,9 +149,42 @@ export class UserService {
         ...(dto.name?.trim() && { name: dto.name.trim() }),
         ...(dto.phone !== undefined && { phone: dto.phone.trim() || null }),
       },
-      select: { id: true, name: true, email: true, phone: true, role: true, pointBalance: true },
+      select: { id: true, name: true, email: true, phone: true, avatarUrl: true, role: true, pointBalance: true },
     });
     return { message: 'Profil berhasil diperbarui', data: user };
+  }
+
+  async updateAvatar(userId: string, file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Gambar wajib diupload');
+
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    const ext = path.extname(file.originalname) || '.jpg';
+    const filename = `avatar-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    fs.writeFileSync(path.join(uploadsDir, filename), file.buffer);
+
+    const avatarUrl = `/uploads/${filename}`;
+
+    // Ambil avatar lama untuk dihapus setelah update berhasil
+    const existing = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarUrl: true },
+    });
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: { id: true, name: true, email: true, phone: true, avatarUrl: true, role: true, pointBalance: true },
+    });
+
+    // Bersihkan file avatar lama (abaikan jika gagal)
+    if (existing?.avatarUrl?.startsWith('/uploads/')) {
+      const oldPath = path.join(process.cwd(), existing.avatarUrl.replace(/^\//, ''));
+      fs.promises.unlink(oldPath).catch(() => undefined);
+    }
+
+    return { message: 'Foto profil berhasil diperbarui', data: user };
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
