@@ -21,7 +21,7 @@ export class EmailService {
   }
 
   async sendOtp(email: string, name: string, otp: string): Promise<void> {
-    const subject = 'Verifikasi Akun EcoPoint';
+    const subject = 'Verifikasi Akun Waste Sort AI';
     const html = this.otpTemplate(name, otp);
     await this.send(email, subject, html);
   }
@@ -33,7 +33,7 @@ export class EmailService {
     actualWeight: number,
     pointsEarned: number,
   ): Promise<void> {
-    const subject = 'Pengajuan Sampah Disetujui – EcoPoint';
+    const subject = 'Pengajuan Sampah Disetujui – Waste Sort AI';
     const html = this.submissionApprovedTemplate(name, wasteType, actualWeight, pointsEarned);
     await this.send(email, subject, html);
   }
@@ -44,13 +44,13 @@ export class EmailService {
     wasteType: string,
     notes: string,
   ): Promise<void> {
-    const subject = 'Pengajuan Sampah Ditolak – EcoPoint';
+    const subject = 'Pengajuan Sampah Ditolak – Waste Sort AI';
     const html = this.submissionRejectedTemplate(name, wasteType, notes);
     await this.send(email, subject, html);
   }
 
   async sendPasswordResetOtp(email: string, name: string, otp: string): Promise<void> {
-    const subject = 'Reset Password EcoPoint';
+    const subject = 'Reset Password Waste Sort AI';
     const html = this.passwordResetTemplate(name, otp);
     await this.send(email, subject, html);
   }
@@ -63,7 +63,7 @@ export class EmailService {
     code: string,
     expiresAt: Date,
   ): Promise<void> {
-    const subject = 'Penukaran Voucher Berhasil – EcoPoint';
+    const subject = 'Penukaran Voucher Berhasil – Waste Sort AI';
     const html = this.voucherRedeemedTemplate(
       name,
       voucherName,
@@ -93,11 +93,11 @@ export class EmailService {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #22c55e; margin: 0;">🌿 EcoPoint</h2>
+          <h2 style="color: #22c55e; margin: 0;">🌿 Waste Sort AI</h2>
         </div>
         <h3 style="color: #1a1a1a;">Halo, ${name}!</h3>
         <p style="color: #444; line-height: 1.6;">
-          Terima kasih telah mendaftar di EcoPoint. Gunakan kode OTP berikut untuk memverifikasi akun Anda:
+          Terima kasih telah mendaftar di Waste Sort AI. Gunakan kode OTP berikut untuk memverifikasi akun Anda:
         </p>
         <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 8px; text-align: center; padding: 20px; margin: 24px 0;">
           <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #16a34a;">${otp}</span>
@@ -107,7 +107,7 @@ export class EmailService {
         </p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
         <p style="color: #999; font-size: 12px; text-align: center;">
-          Jika Anda tidak mendaftar di EcoPoint, abaikan email ini.
+          Jika Anda tidak mendaftar di Waste Sort AI, abaikan email ini.
         </p>
       </div>
     `;
@@ -122,7 +122,7 @@ export class EmailService {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #22c55e; margin: 0;">🌿 EcoPoint</h2>
+          <h2 style="color: #22c55e; margin: 0;">🌿 Waste Sort AI</h2>
         </div>
         <h3 style="color: #1a1a1a;">Halo, ${name}! 🎉</h3>
         <p style="color: #444; line-height: 1.6;">
@@ -134,10 +134,10 @@ export class EmailService {
           <p style="margin: 4px 0; color: #16a34a; font-size: 18px;"><strong>Poin Diterima: +${pointsEarned} poin</strong></p>
         </div>
         <p style="color: #444; line-height: 1.6;">
-          Poin Anda telah ditambahkan. Tukarkan poin dengan voucher menarik di aplikasi EcoPoint!
+          Poin Anda telah ditambahkan. Tukarkan poin dengan voucher menarik di aplikasi Waste Sort AI!
         </p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
-        <p style="color: #999; font-size: 12px; text-align: center;">EcoPoint – Bersama Jaga Lingkungan</p>
+        <p style="color: #999; font-size: 12px; text-align: center;">Waste Sort AI – Bersama Jaga Lingkungan</p>
       </div>
     `;
   }
@@ -150,7 +150,7 @@ export class EmailService {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #22c55e; margin: 0;">🌿 EcoPoint</h2>
+          <h2 style="color: #22c55e; margin: 0;">🌿 Waste Sort AI</h2>
         </div>
         <h3 style="color: #1a1a1a;">Halo, ${name}</h3>
         <p style="color: #444; line-height: 1.6;">
@@ -164,7 +164,7 @@ export class EmailService {
           Silakan ajukan kembali setelah memastikan sampah sesuai dengan ketentuan.
         </p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
-        <p style="color: #999; font-size: 12px; text-align: center;">EcoPoint – Bersama Jaga Lingkungan</p>
+        <p style="color: #999; font-size: 12px; text-align: center;">Waste Sort AI – Bersama Jaga Lingkungan</p>
       </div>
     `;
   }
@@ -173,11 +173,11 @@ export class EmailService {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #22c55e; margin: 0;">🌿 EcoPoint</h2>
+          <h2 style="color: #22c55e; margin: 0;">🌿 Waste Sort AI</h2>
         </div>
         <h3 style="color: #1a1a1a;">Halo, ${name}!</h3>
         <p style="color: #444; line-height: 1.6;">
-          Kami menerima permintaan untuk mereset password akun EcoPoint Anda. Gunakan kode OTP berikut:
+          Kami menerima permintaan untuk mereset password akun Waste Sort AI Anda. Gunakan kode OTP berikut:
         </p>
         <div style="background: #fff7ed; border: 2px solid #f97316; border-radius: 8px; text-align: center; padding: 20px; margin: 24px 0;">
           <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #ea580c;">${otp}</span>
@@ -189,7 +189,7 @@ export class EmailService {
           Jika Anda tidak meminta reset password, abaikan email ini. Password Anda tidak akan berubah.
         </p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
-        <p style="color: #999; font-size: 12px; text-align: center;">EcoPoint – Bersama Jaga Lingkungan</p>
+        <p style="color: #999; font-size: 12px; text-align: center;">Waste Sort AI – Bersama Jaga Lingkungan</p>
       </div>
     `;
   }
@@ -209,7 +209,7 @@ export class EmailService {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h2 style="color: #22c55e; margin: 0;">🌿 EcoPoint</h2>
+          <h2 style="color: #22c55e; margin: 0;">🌿 Waste Sort AI</h2>
         </div>
         <h3 style="color: #1a1a1a;">Halo, ${name}! 🎁</h3>
         <p style="color: #444; line-height: 1.6;">
@@ -227,10 +227,10 @@ export class EmailService {
           Berlaku sampai <strong>${expiryStr}</strong> (14 hari)
         </p>
         <p style="color: #444; line-height: 1.6;">
-          Voucher juga tersimpan di menu <strong>Voucher Saya</strong> pada aplikasi EcoPoint. Tunjukkan kode di atas saat menukarkan di merchant mitra sebelum kedaluwarsa.
+          Voucher juga tersimpan di menu <strong>Voucher Saya</strong> pada aplikasi Waste Sort AI. Tunjukkan kode di atas saat menukarkan di merchant mitra sebelum kedaluwarsa.
         </p>
         <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 24px 0;" />
-        <p style="color: #999; font-size: 12px; text-align: center;">EcoPoint – Bersama Jaga Lingkungan</p>
+        <p style="color: #999; font-size: 12px; text-align: center;">Waste Sort AI – Bersama Jaga Lingkungan</p>
       </div>
     `;
   }

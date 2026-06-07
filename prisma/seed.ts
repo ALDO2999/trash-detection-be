@@ -10,11 +10,11 @@ async function main() {
   // Seed petugas
   const petugasPassword = await bcrypt.hash('petugas123', 10);
   const petugas = await prisma.user.upsert({
-    where: { email: 'petugas@ecopoint.id' },
+    where: { email: 'petugas@wastesortai.id' },
     update: {},
     create: {
-      name: 'Petugas EcoPoint',
-      email: 'petugas@ecopoint.id',
+      name: 'Petugas Waste Sort AI',
+      email: 'petugas@wastesortai.id',
       password: petugasPassword,
       role: Role.PETUGAS,
       isVerified: true,

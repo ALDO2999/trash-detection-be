@@ -33,7 +33,7 @@ const WASTE_BANKS: WasteBank[] = [
   },
   {
     id: 'wb-003',
-    name: 'EcoPoint Drop Center Sudirman',
+    name: 'Waste Sort AI Drop Center Sudirman',
     address: 'Jl. Jenderal Sudirman Kav. 52-53',
     city: 'Jakarta Selatan',
     openHours: 'Senin–Jumat, 09.00–20.00',
